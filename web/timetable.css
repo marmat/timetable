@@ -1,0 +1,20 @@
+body {
+  background-color: #F8F8F8;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.2em;
+  margin: 15px;
+}
+
+h1,p {
+  color: #333;
+}
+
+#flapLine {
+  background-color: #333;
+  color: #ECECEC;
+  font-family: Courier;
+  font-size: 18px;
+  padding: 10px;
+}
