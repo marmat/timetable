@@ -10,11 +10,3 @@ body {
 h1,p {
   color: #333;
 }
-
-#flapLine {
-  background-color: #333;
-  color: #ECECEC;
-  font-family: Courier;
-  font-size: 18px;
-  padding: 10px;
-}

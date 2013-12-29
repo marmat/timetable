@@ -2,16 +2,17 @@
 
 <html>
 <head>
-<meta charset="utf-8">
-<title>Timetable</title>
-<link rel="stylesheet" href="timetable.css">
+  <meta charset="utf-8">
+  <title>Timetable</title>
+  <link rel="stylesheet" href="timetable.css">
+  <link rel="import" href="flap_line.html">
+  <script src="packages/browser/dart.js"></script>
 </head>
 <body>
   <h1>Timetable</h1>
-  <div id="flapLine">Hello, Dart!</div>
+  <flap-line id="flapLine" length="50"></flap-line>
   <button id="btn">Change Text</button>
 
   <script type="application/dart" src="timetable.dart"></script>
-  <script src="packages/browser/dart.js"></script>
 </body>
 </html>
