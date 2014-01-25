@@ -3,12 +3,12 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:math';
 import 'package:polymer/polymer.dart';
-
+ 
 HtmlEscape htmlEscape = new HtmlEscape();
-
+ 
 @CustomTag('flap-line')
 class FlapLine extends PolymerElement {
-  @published String value = 'Hello';
+  @published String value = '';
   @published int length = null; // null indicates dynamic width
   
   SpanElement _line;
@@ -51,7 +51,7 @@ class FlapLine extends PolymerElement {
     if (_activeTimer != null) {
       _activeTimer.cancel();
     }
-
+ 
     _activeTimer = new Timer.periodic(new Duration(milliseconds: 10), (Timer t) {
       _animateStep(newValue);
       if (_current.trim() == newValue.trim()) t.cancel();
