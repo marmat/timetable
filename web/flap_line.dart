@@ -1,3 +1,5 @@
+library flap_line;
+
 import 'dart:convert';
 import 'dart:async';
 import 'dart:html';
@@ -16,6 +18,15 @@ class FlapLine extends PolymerElement {
   String _current = '';
   
   FlapLine.created() : super.created();
+  
+  factory FlapLine({String value: '', int length: null}) {
+    // Apparently the best way to construct a new PolymerElement 
+    // instance dynamically is via new Element.tag()
+    var element = new Element.tag('flap-line');
+    element.value = value;
+    element.length = length;
+    return element;
+  }
   
   enteredView() {
     super.enteredView();

@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:html';
 import 'package:intl/intl.dart';
-import "package:json_object/json_object.dart";
 import 'package:polymer/polymer.dart';
 
+import '../common/table_entry.dart';
 import 'flap_line.dart';
+
 
 // DISCLAIMER: The following code is a mess. I'm just
 // experimenting around...
@@ -13,102 +14,72 @@ TimeTable timeTable;
 String DATA_SOURCE = 'http://localhost:9999/';
 
 /**
- * The data structure representing a single 'flight'.
- */
-class Entry {
-  String id;
-  String time; 
-  DateTime get dateTime => DateTime.parse(time);
-  String description;
-  String location;
-  String note;
-  
-  Entry(this.id, this.time, this.description, this.location, this.note);
-}
-
-class EntryImpl extends JsonObject implements Entry {
-  EntryImpl();
-  EntryImpl.fromMap(Map map) : super.fromMap(map);
-  
-  DateTime get dateTime => DateTime.parse(time);
-  
-  factory EntryImpl.fromJsonString(string) {
-    return new JsonObject.fromJsonString(string, new EntryImpl()); 
-  }
-}
-
-/**
  * An aggregation of several FlapLine elements in order to form a single line
  * of the time table.
  */
 class TimeTableLine {
-  FlapLine time, flight, destination, gate, remark;
-  Element container;
+  List<FlapLine> _columns;
+  final Element container;
+  final int TIME = 0, FLIGHT = 1, DESTINATION = 2, GATE = 3, REMARK = 4;
   
-  TimeTableLine() {
-    time = new Element.tag('flap-line');
-    time.length = 5;
-    flight = new Element.tag('flap-line');
-    flight.length = 6;
-    destination = new Element.tag('flap-line');
-    destination.length = 40;
-    gate = new Element.tag('flap-line');
-    gate.length = 6;
-    remark = new Element.tag('flap-line');
-    remark.length = 10;
-    container = new Element.tag('tr');
-    [time, flight, destination, gate, remark].forEach((el) { 
+  TimeTableLine() : 
+      _columns = [new FlapLine(length: 5), new FlapLine(length: 6), 
+                new FlapLine(length: 40), new FlapLine(length: 6), 
+                new FlapLine(length: 10)], 
+      container = new Element.tag('tr') {
+    // Add the cells (wrapped in table columns) into 
+    // the table row container 
+    _columns.forEach((line) {
       var wrap = new Element.tag('td');
-      wrap.children.add(el);
+      wrap.children.add(line);
       container.children.add(wrap);
-    });
-    
+    });    
   }
   
-  void setContent(Entry e) {
-    time.value = new DateFormat.Hm().format(e.dateTime);
-    flight.value = e.id;
-    destination.value = e.description;
-    gate.value = e.location;
-    remark.value = e.note;
+  void setContent(TableEntry e) {
+    _columns[TIME].value = new DateFormat.Hm().format(e.dateTime);
+    _columns[FLIGHT].value = e.id;
+    _columns[DESTINATION].value = e.description;
+    _columns[GATE].value = e.location;
+    _columns[REMARK].value = e.note;
   }
 }
 
 class TimeTable {
-  Map<String, Entry> entries_ = new Map();
-  List<TimeTableLine> lines_ = new List();
+  Map<String, TableEntry> _entries = new Map();
+  List<TimeTableLine> _lines = new List();
   
   TimeTable(Element el) {
     for(var i = 0; i < 10; i++) {
-      lines_.add(new TimeTableLine());
-      el.children.add(lines_.last.container);
+      _lines.add(new TimeTableLine());
+      el.children.add(_lines.last.container);
     }
   }
   
-  void addEntry(Entry e) {
-    if (entries_.length >= lines_.length) {
+  void addTableEntry(TableEntry e) {
+    if (_entries.length >= _lines.length) {
       var sorted = getSortedEntries();
       var i = 0;
-      while (entries_.length >= lines_.length) {
+      while (_entries.length >= _lines.length) {
         // Remove the oldest entries
-        entries_.remove(sorted[i++].id);
+        _entries.remove(sorted[i++].id);
       }  
     }
         
-    entries_[e.id] = e;
+    _entries[e.id] = e;
     updateDisplay();
   }
   
-  List<Entry> getSortedEntries() {
-    var entries = entries_.values.toList();
-    entries.sort((e1, e2) => ((e1.dateTime.hour * 100) + e1.dateTime.minute) - ((e2.dateTime.hour * 100) + e2.dateTime.minute));
+  List<TableEntry> getSortedEntries() {
+    var entries = _entries.values.toList();
+    entries.sort();
     return entries;
   }
   
   void updateDisplay() {
     var entries = getSortedEntries();
     var i = 0;
-    entries.forEach((entry) { lines_[i++].setContent(entry); });
+    entries.forEach((TableEntry) { _lines[i++].setContent(TableEntry); });
   }
 }
 
@@ -120,16 +91,20 @@ void main() {
 
 void fetchEntries() {
   // Some local mock entries
-  timeTable.addEntry(new Entry('DRT102', "2014-02-22 12:00", 'Codelab: Intro to Dart', 'CONF1', 'Boarding'));
-  timeTable.addEntry(new Entry('DRT203', "2014-02-22 09:30", 'Polymer.dart in action', 'CONF2', ''));
+  timeTable.addTableEntry(new TableEntry.fromData('DRT102', '2014-02-22 11:00', 'Codelab: Write a Web App', 'CONF1', 'Boarding'));
+  timeTable.addTableEntry(new TableEntry.fromData('DRT201', '2014-02-22 09:30', 'Tech Talk: Intro to Dart', 'CONF2', ''));
+  timeTable.addTableEntry(new TableEntry.fromData('DRT103', '2014-02-22 12:00', 'Codelab: Using Polymer.dart', 'CONF2', ''));
+  timeTable.addTableEntry(new TableEntry.fromData('GDG001', '2014-02-22 09:00', 'Flight School Safety Instructions', 'CONF1', ''));
+  timeTable.addTableEntry(new TableEntry.fromData('DRT202', '2014-02-22 13:30', 'Tech Talk: Polymer.dart in action', 'CONF2', ''));
+  timeTable.addTableEntry(new TableEntry.fromData('HX1337', '2014-02-22 14:00', 'Dart Hackathon', 'CONF1', ''));
   
   // Fetch entries from server
   HttpRequest.getString(DATA_SOURCE).then((response) {
     var entries = JSON.decode(response);
-    print(entries);
     entries.forEach((data) {
-      EntryImpl entry = new EntryImpl.fromMap(data);
-      timeTable.addEntry(entry);
+      TableEntry tableEntry = new TableEntry.fromMap(data);
+      print(tableEntry);
+      timeTable.addTableEntry(tableEntry);
     });
   });
 }
