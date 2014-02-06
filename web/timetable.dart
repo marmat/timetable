@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:html';
+import 'package:intl/intl.dart';
+import "package:json_object/json_object.dart";
 import 'package:polymer/polymer.dart';
+
 import 'flap_line.dart';
 
 // DISCLAIMER: The following code is a mess. I'm just
@@ -14,18 +17,23 @@ String DATA_SOURCE = 'http://localhost:9999/';
  */
 class Entry {
   String id;
-  DateTime time;
+  String time; 
+  DateTime get dateTime => DateTime.parse(time);
   String description;
   String location;
   String note;
   
   Entry(this.id, this.time, this.description, this.location, this.note);
-  Entry.fromJsonObject(obj) {
-    id = obj['id'];
-    time = DateTime.parse(obj['time']);
-    description = obj['description'];
-    location = obj['location'];
-    note = obj['note'];
+}
+
+class EntryImpl extends JsonObject implements Entry {
+  EntryImpl();
+  EntryImpl.fromMap(Map map) : super.fromMap(map);
+  
+  DateTime get dateTime => DateTime.parse(time);
+  
+  factory EntryImpl.fromJsonString(string) {
+    return new JsonObject.fromJsonString(string, new EntryImpl()); 
   }
 }
 
@@ -58,7 +66,7 @@ class TimeTableLine {
   }
   
   void setContent(Entry e) {
-    time.value = e.time.hour.toString() + ':' + e.time.minute.toString();
+    time.value = new DateFormat.Hm().format(e.dateTime);
     flight.value = e.id;
     destination.value = e.description;
     gate.value = e.location;
@@ -93,7 +101,7 @@ class TimeTable {
   
   List<Entry> getSortedEntries() {
     var entries = entries_.values.toList();
-    entries.sort((e1, e2) => e1.time.millisecondsSinceEpoch - e2.time.millisecondsSinceEpoch);
+    entries.sort((e1, e2) => ((e1.dateTime.hour * 100) + e1.dateTime.minute) - ((e2.dateTime.hour * 100) + e2.dateTime.minute));
     return entries;
   }
   
@@ -112,14 +120,16 @@ void main() {
 
 void fetchEntries() {
   // Some local mock entries
-  timeTable.addEntry(new Entry('DRT102', new DateTime.utc(2014, 2, 22, 10, 35), 'Codelab: Intro to Dart', 'CONF1', 'Boarding'));
-  timeTable.addEntry(new Entry('DRT203', new DateTime.utc(2014, 2, 22, 11, 15), 'Polymer.dart in action', 'CONF2', ''));
+  timeTable.addEntry(new Entry('DRT102', "2014-02-22 12:00", 'Codelab: Intro to Dart', 'CONF1', 'Boarding'));
+  timeTable.addEntry(new Entry('DRT203', "2014-02-22 09:30", 'Polymer.dart in action', 'CONF2', ''));
   
   // Fetch entries from server
   HttpRequest.getString(DATA_SOURCE).then((response) {
-    List entries = JSON.decode(response);
-    entries.forEach((entry) {
-      timeTable.addEntry(new Entry.fromJsonObject(entry));
+    var entries = JSON.decode(response);
+    print(entries);
+    entries.forEach((data) {
+      EntryImpl entry = new EntryImpl.fromMap(data);
+      timeTable.addEntry(entry);
     });
   });
 }
