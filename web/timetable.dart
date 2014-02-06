@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:html';
 import 'package:polymer/polymer.dart';
 import 'flap_line.dart';
@@ -6,6 +7,7 @@ import 'flap_line.dart';
 // experimenting around...
 
 TimeTable timeTable;
+String DATA_SOURCE = 'http://localhost:9999/';
 
 /**
  * The data structure representing a single 'flight'.
@@ -18,6 +20,13 @@ class Entry {
   String note;
   
   Entry(this.id, this.time, this.description, this.location, this.note);
+  Entry.fromJsonObject(obj) {
+    id = obj['id'];
+    time = DateTime.parse(obj['time']);
+    description = obj['description'];
+    location = obj['location'];
+    note = obj['note'];
+  }
 }
 
 /**
@@ -98,6 +107,19 @@ class TimeTable {
 void main() {
   initPolymer();
   timeTable = new TimeTable(querySelector('#timeTable'));
-  timeTable.addEntry(new Entry('DRT101', new DateTime.utc(2014, 2, 22, 10, 15), 'Codelab: Intro to Dart', 'CONF1', 'Boarding'));
+  fetchEntries();
+}
+
+void fetchEntries() {
+  // Some local mock entries
+  timeTable.addEntry(new Entry('DRT102', new DateTime.utc(2014, 2, 22, 10, 35), 'Codelab: Intro to Dart', 'CONF1', 'Boarding'));
   timeTable.addEntry(new Entry('DRT203', new DateTime.utc(2014, 2, 22, 11, 15), 'Polymer.dart in action', 'CONF2', ''));
+  
+  // Fetch entries from server
+  HttpRequest.getString(DATA_SOURCE).then((response) {
+    List entries = JSON.decode(response);
+    entries.forEach((entry) {
+      timeTable.addEntry(new Entry.fromJsonObject(entry));
+    });
+  });
 }

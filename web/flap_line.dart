@@ -25,7 +25,6 @@ class FlapLine extends PolymerElement {
   
   attributeChanged(String name, String oldValue, String newValue) {
     super.attributeChanged(name, oldValue, newValue);
-    print('attr changed: $name, $oldValue, $newValue');
     animateValue(value);
   }
   
